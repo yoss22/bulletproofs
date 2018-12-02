@@ -2,17 +2,16 @@ package bulletproofs
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/btcsuite/btcd/btcec"
 	"math/big"
 	"testing"
 )
 
 func decompressPointFromHex(s string) *Point {
-	b := MustDecode(s)
-	Vx := new(big.Int).SetBytes(b[1:])
-	Vy, _ := decompressPoint(curve, Vx, b[0] == 0)
-	return &Point{x: Vx, y: Vy}
+	point := new(Point)
+	if err := point.Read(bytes.NewReader(MustDecode(s))); err != nil {
+		panic(err)
+	}
+	return point
 }
 
 // mustDecode32Bytes reads exactly 32 bytes from a hex encoded string.
@@ -24,28 +23,6 @@ func mustDecode32Bytes(h string) [32]byte {
 	}
 	copy(buf[:], s)
 	return buf
-}
-
-// This function is copied directly from btcsuite.
-//
-// decompressPoint decompresses a point on the given curve given the X point and
-// the solution to use.
-func decompressPoint(curve *btcec.KoblitzCurve, x *big.Int, ybit bool) (*big.Int, error) {
-	// Y = +-sqrt(x^3 + B)
-	x3 := new(big.Int).Mul(x, x)
-	x3.Mul(x3, x)
-	x3.Add(x3, curve.Params().B)
-
-	// now calculate sqrt mod p of x^3 + B
-	y := ModSqrtFast(x3)
-
-	if ybit != isOdd(y) {
-		y.Sub(curve.Params().P, y)
-	}
-	if ybit != isOdd(y) {
-		return nil, fmt.Errorf("ybit doesn't match oddness")
-	}
-	return y, nil
 }
 
 func TestComputePowersOfChallenge(t *testing.T) {
@@ -186,11 +163,11 @@ func TestRangeProofVerifyLarge(t *testing.T) {
 		t.Error("Failed to deserialize proof")
 	}
 
-	Vx := new(big.Int).SetBytes(serialisedCommitment[1:])
-	Vy, _ := decompressPoint(curve, Vx, true)
-	Vy = new(big.Int).Sub(curve.P, Vy)
+	V := new(Point)
+	if err := V.Read(bytes.NewReader(serialisedCommitment)); err != nil {
+		t.Error("Failed to deserialize commitment")
+	}
 
-	V := &Point{x: Vx, y: Vy}
 	verifier := NewProver(64)
 	if !verifier.Verify(V, *proof) {
 		t.Error("Expected valid proof")

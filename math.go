@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"io"
 	"math/big"
 )
 
@@ -21,6 +22,35 @@ func (p *Point) Equals(other *Point) bool {
 // String prints the coordinates of this point.
 func (p *Point) String() string {
 	return fmt.Sprintf("{x: %032x, y: %032x}", p.x.Bytes(), p.y.Bytes())
+}
+
+// Read deserializes a compressed elliptic curve point from the reader.
+func (p *Point) Read(r io.Reader) error {
+	buf := make([]byte, 32+1)
+	if _, err := io.ReadFull(r, buf); err != nil {
+		return err
+	}
+
+	point, err := DeserializePoints(buf, 1)
+	if err != nil {
+		return err
+	}
+
+	p.x = point[0].x
+	p.y = point[0].y
+
+	return nil
+}
+
+// Bytes compresses and serializes the point.
+func (p *Point) Bytes() []byte {
+	buff := new(bytes.Buffer)
+
+	if _, err := buff.Write(SerializePoints([]*Point{p})); err != nil {
+		logrus.Fatal(err)
+	}
+
+	return buff.Bytes()
 }
 
 // isOdd returns true if the given integer is odd.
