@@ -2,6 +2,7 @@ package bulletproofs
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -30,14 +31,29 @@ func (p *Point) Read(r io.Reader) error {
 	if _, err := io.ReadFull(r, buf); err != nil {
 		return err
 	}
+	sign := buf[0]
+	x := new(big.Int).SetBytes(buf[1:])
 
-	point, err := DeserializePoints(buf, 1)
-	if err != nil {
-		return err
+	if (sign & 0xfe) != 8 {
+		return errors.New("point is not serialized correctly")
 	}
 
-	p.x = point[0].x
-	p.y = point[0].y
+	// Derive the possible y coordinates from the secp256k1 curve
+	// y² = x³ + 7.
+	x3 := new(big.Int).Mul(x, x)
+	x3.Mul(x3, x)
+	x3.Add(x3, curve.Params().B)
+
+	// y = ±sqrt(x³ + 7).
+	y := ModSqrtFast(x3)
+
+	// Pick which y from the sign encoded in the first byte.
+	if (sign & 1) != 0 {
+		y = new(big.Int).Sub(curve.P, y)
+	}
+
+	p.x = x
+	p.y = y
 
 	return nil
 }
@@ -46,7 +62,17 @@ func (p *Point) Read(r io.Reader) error {
 func (p *Point) Bytes() []byte {
 	buff := new(bytes.Buffer)
 
-	if _, err := buff.Write(SerializePoints([]*Point{p})); err != nil {
+	sign := byte(9)
+	if IsQuadraticResidue(p.y) {
+		sign ^= 1
+	}
+
+	if err := buff.WriteByte(sign); err != nil {
+		logrus.Fatal(err)
+	}
+
+	x := GetB32(p.x)
+	if _, err := buff.Write(x[:]); err != nil {
 		logrus.Fatal(err)
 	}
 
