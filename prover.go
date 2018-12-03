@@ -584,9 +584,9 @@ func rangeProofCreate(n int, V *Point, v, gamma *big.Int, g, h *Point,
 
 	// Blinding factors in t̂.
 	taux := Sum(
-		Mul(tau2, x, x),  // factor for T2
-		Mul(tau1, x),     // factor for T1
-		Mul(zz, gamma)) // factor for V
+		Mul(tau2, x, x), // factor for T2
+		Mul(tau1, x),    // factor for T1
+		Mul(zz, gamma))  // factor for V
 
 	// The verifier checks the following equality holds under the commitments
 	// provided by the prover:

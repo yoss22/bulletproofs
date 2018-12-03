@@ -17,10 +17,10 @@ var (
 	prefix2, _ = hex.DecodeString("326e642067656e65726174696f6e3a20")
 
 	// curve is secp256k1
-	curve                       = btcec.S256()
+	curve = btcec.S256()
 
 	// sqrtMinusThree as a field element in secp256k1
-	sqrtMinusThree              = computeSqrtMinusThree()
+	sqrtMinusThree = computeSqrtMinusThree()
 
 	// sqrtMinusThreeSubOneOverTwo as a field element in secp256k1
 	sqrtMinusThreeSubOneOverTwo = subOneOverTwo(sqrtMinusThree)
