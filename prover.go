@@ -383,11 +383,13 @@ func (p *BulletProof) Read(r io.Reader) error {
 func (p *BulletProof) Bytes() []byte {
 	buff := new(bytes.Buffer)
 
-	if _, err := buff.Write(p.negTaux.Bytes()); err != nil {
+	fixed := GetB32(p.negTaux)
+	if _, err := buff.Write(fixed[:]); err != nil {
 		logrus.Fatal(err)
 	}
 
-	if _, err := buff.Write(p.negMu.Bytes()); err != nil {
+	fixed = GetB32(p.negMu)
+	if _, err := buff.Write(fixed[:]); err != nil {
 		logrus.Fatal(err)
 	}
 
@@ -396,18 +398,21 @@ func (p *BulletProof) Bytes() []byte {
 		logrus.Fatal(err)
 	}
 
-	if _, err := buff.Write(p.tHat.Bytes()); err != nil {
+	fixed = GetB32(p.tHat)
+	if _, err := buff.Write(fixed[:]); err != nil {
 		logrus.Fatal(err)
 	}
 
 	for _, a := range p.a {
-		if _, err := buff.Write(a.Bytes()); err != nil {
+		fixed = GetB32(a)
+		if _, err := buff.Write(fixed[:]); err != nil {
 			logrus.Fatal(err)
 		}
 	}
 
 	for _, b := range p.b {
-		if _, err := buff.Write(b.Bytes()); err != nil {
+		fixed = GetB32(b)
+		if _, err := buff.Write(fixed[:]); err != nil {
 			logrus.Fatal(err)
 		}
 	}
