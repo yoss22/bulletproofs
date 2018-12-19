@@ -208,7 +208,7 @@ func createSingleGenerator(key32 []byte) *Point {
 	G1 := EncodeFieldElementToCurve(new(big.Int).SetBytes(b32[:]))
 	G2 := EncodeFieldElementToCurve(new(big.Int).SetBytes(b322[:]))
 
-	accumx, accumy := curve.Add(G1.x, G1.y, G2.x, G2.y)
+	accumx, accumy := curve.Add(G1.X, G1.Y, G2.X, G2.Y)
 
 	if !curve.IsOnCurve(accumx, accumy) {
 		panic("should be on curve")

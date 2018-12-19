@@ -173,8 +173,8 @@ func proverCommitToT(n int, z, zz, tau1, tau2 *big.Int, aL, aR, sL, sR, Y,
 func updateCommit(commit [32]byte, lpt, rpt *Point) ([32]byte, *big.Int) {
 	// If Jacobi(a, P) = −1 then a is a quadratic nonresidue modulo P, i.e. a is
 	// not a square.
-	lQuadraticNonResidue := big.Jacobi(lpt.y, curve.P) == -1
-	rQuadraticNonResidue := big.Jacobi(rpt.y, curve.P) == -1
+	lQuadraticNonResidue := big.Jacobi(lpt.Y, curve.P) == -1
+	rQuadraticNonResidue := big.Jacobi(rpt.Y, curve.P) == -1
 
 	lrparity := byte(0)
 	if lQuadraticNonResidue {
@@ -184,8 +184,8 @@ func updateCommit(commit [32]byte, lpt, rpt *Point) ([32]byte, *big.Int) {
 		lrparity++
 	}
 
-	lx := GetB32(lpt.x)
-	rx := GetB32(rpt.x)
+	lx := GetB32(lpt.X)
+	rx := GetB32(rpt.X)
 
 	var h []byte
 	h = append(h, commit[:]...)
@@ -754,9 +754,9 @@ func NewProver(n int) *Prover {
 
 	gx, _ := new(big.Int).SetString("50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0", 16)
 	gy, _ := new(big.Int).SetString("31d3c6863973926e049e637cb1b5f40a36dac28af1766968c30c2313f3a38904", 16)
-	g := Point{x: gx, y: gy}
+	g := Point{X: gx, Y: gy}
 
-	h := Point{x: curve.Gx, y: curve.Gy}
+	h := Point{X: curve.Gx, Y: curve.Gy}
 
 	powersOfTwo := powers(big.NewInt(2), n)
 

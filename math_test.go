@@ -29,7 +29,7 @@ func TestScalarMult(t *testing.T) {
 
 	actual := ScalarMulPoint(point, scalar)
 
-	if actual.x.Cmp(expectedX) != 0 || actual.y.Cmp(expectedY) != 0 {
+	if actual.X.Cmp(expectedX) != 0 || actual.Y.Cmp(expectedY) != 0 {
 		t.Errorf("TestScalarMult wrong result\n"+
 			"got: %v\nwant: %v %v", actual, expectedX, expectedY)
 	}

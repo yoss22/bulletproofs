@@ -219,13 +219,13 @@ func TestUpdateCommit(t *testing.T) {
 	lx := mustDecode32Bytes("abd7c1ee6d60c83c97750ebf05bac393ff1311dbd80609940315969ee0cc3dd9")
 	ly := mustDecode32Bytes("2a398e6553103f34efc85b4c9217cca19bcce985f5e7739443a6e72dafacbe6f")
 	l := &Point{
-		x: new(big.Int).SetBytes(lx[:]),
-		y: new(big.Int).SetBytes(ly[:])}
+		X: new(big.Int).SetBytes(lx[:]),
+		Y: new(big.Int).SetBytes(ly[:])}
 	rx := mustDecode32Bytes("1116e73c87f6dda42915254e6b3ab723f282bfd98a6e50bfe4a3f6e0c2b88304")
 	ry := mustDecode32Bytes("a3f62a70ae256efa3deae8703ab6814d8faadfb350378dd4c7cfc9a7b82c8bda")
 	r := &Point{
-		x: new(big.Int).SetBytes(rx[:]),
-		y: new(big.Int).SetBytes(ry[:])}
+		X: new(big.Int).SetBytes(rx[:]),
+		Y: new(big.Int).SetBytes(ry[:])}
 
 	expected := mustDecode32Bytes("3f759d46ace638016492b0c33ba3ccd43954965be581012f31b0696d27af6ea2")
 	actual, _ := updateCommit(zeros, l, r)
@@ -278,8 +278,8 @@ func TestSerializePoints(t *testing.T) {
 	hx, _ := new(big.Int).SetString("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", 16)
 	hy, _ := new(big.Int).SetString("483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8", 16)
 
-	g := Point{x: gx, y: gy}
-	h := Point{x: hx, y: hy}
+	g := Point{X: gx, Y: gy}
+	h := Point{X: hx, Y: hy}
 
 	buf := SerializePoints([]*Point{&g, &h})
 

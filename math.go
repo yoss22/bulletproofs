@@ -11,18 +11,18 @@ import (
 
 // Point is a group element of the secp256k1 curve in affine coordinates.
 type Point struct {
-	x *big.Int
-	y *big.Int
+	X *big.Int
+	Y *big.Int
 }
 
 // Equals returns true if the given point is the same.
 func (p *Point) Equals(other *Point) bool {
-	return p.x.Cmp(other.x) == 0 && p.y.Cmp(other.y) == 0
+	return p.X.Cmp(other.X) == 0 && p.Y.Cmp(other.Y) == 0
 }
 
 // String prints the coordinates of this point.
 func (p *Point) String() string {
-	return fmt.Sprintf("{x: %032x, y: %032x}", p.x.Bytes(), p.y.Bytes())
+	return fmt.Sprintf("{x: %032x, y: %032x}", p.X.Bytes(), p.Y.Bytes())
 }
 
 // Read deserializes a compressed elliptic curve point from the reader.
@@ -52,18 +52,23 @@ func (p *Point) Read(r io.Reader) error {
 		y = new(big.Int).Sub(curve.P, y)
 	}
 
-	p.x = x
-	p.y = y
+	p.X = x
+	p.Y = y
 
 	return nil
 }
+
+// serializedPedersenCommitment is the constant that is encoded to signal that
+// the encoded value is a Pedersen commitment, rather than a standard compressed
+// curve point.
+const serializedPedersenCommitment = byte(9)
 
 // Bytes compresses and serializes the point.
 func (p *Point) Bytes() []byte {
 	buff := new(bytes.Buffer)
 
-	sign := byte(9)
-	if IsQuadraticResidue(p.y) {
+	sign := serializedPedersenCommitment
+	if IsQuadraticResidue(p.Y) {
 		sign ^= 1
 	}
 
@@ -71,7 +76,7 @@ func (p *Point) Bytes() []byte {
 		logrus.Fatal(err)
 	}
 
-	x := GetB32(p.x)
+	x := GetB32(p.X)
 	if _, err := buff.Write(x[:]); err != nil {
 		logrus.Fatal(err)
 	}
@@ -109,7 +114,7 @@ func SerializePoints(points []*Point) []byte {
 	// Encode whether each y value is a quadratic residue, so when we decompress
 	// the points we can determine the sign of the y coordinate.
 	for i, point := range points {
-		if !IsQuadraticResidue(point.y) {
+		if !IsQuadraticResidue(point.Y) {
 			bitvec[i/8] |= 1 << (uint(i) % 8)
 		}
 	}
@@ -117,7 +122,7 @@ func SerializePoints(points []*Point) []byte {
 	// Now write all the x coordinates as fixed 32-byte integers.
 	buff := new(bytes.Buffer)
 	for _, point := range points {
-		x := GetB32(point.x)
+		x := GetB32(point.X)
 		if _, err := buff.Write(x[:]); err != nil {
 			logrus.Fatal(err)
 		}
@@ -152,8 +157,8 @@ func DeserializePoints(buf []byte, num uint) ([]*Point, error) {
 		}
 
 		points[i] = new(Point)
-		points[i].y = y
-		points[i].x = x
+		points[i].Y = y
+		points[i].X = x
 	}
 
 	return points, nil
@@ -161,18 +166,18 @@ func DeserializePoints(buf []byte, num uint) ([]*Point, error) {
 
 // ScalarMulPoint multiplies a point by a scalar.
 func ScalarMulPoint(point *Point, scalar *big.Int) *Point {
-	x, y := curve.ScalarMult(point.x, point.y, scalar.Bytes())
+	x, y := curve.ScalarMult(point.X, point.Y, scalar.Bytes())
 	return &Point{x, y}
 }
 
 // ScalarMultAll multiplies all points by the given scalar and sums the results.
 func ScalarMultAll(scalar *big.Int, points ...*Point) *Point {
 	initial := ScalarMulPoint(points[0], scalar)
-	sumx := new(big.Int).Set(initial.x)
-	sumy := new(big.Int).Set(initial.y)
+	sumx := new(big.Int).Set(initial.X)
+	sumy := new(big.Int).Set(initial.Y)
 	for i := 1; i < len(points); i++ {
 		mult := ScalarMulPoint(points[i], scalar)
-		sumx, sumy = curve.Add(sumx, sumy, mult.x, mult.y)
+		sumx, sumy = curve.Add(sumx, sumy, mult.X, mult.Y)
 	}
 	return &Point{sumx, sumy}
 }
@@ -185,11 +190,11 @@ func ScalarMulPoints(scalars []*big.Int, points []*Point) *Point {
 		panic("len(scalars) != len(points)")
 	}
 	initial := ScalarMulPoint(points[0], scalars[0])
-	sumx := new(big.Int).Set(initial.x)
-	sumy := new(big.Int).Set(initial.y)
+	sumx := new(big.Int).Set(initial.X)
+	sumy := new(big.Int).Set(initial.Y)
 	for i := 1; i < len(points); i++ {
 		mult := ScalarMulPoint(points[i], scalars[i])
-		sumx, sumy = curve.Add(sumx, sumy, mult.x, mult.y)
+		sumx, sumy = curve.Add(sumx, sumy, mult.X, mult.Y)
 	}
 	return &Point{sumx, sumy}
 }
@@ -310,7 +315,7 @@ func HadamardP(a []*Point, b []*Point) []*Point {
 	result := make([]*Point, len(a))
 	for i := range a {
 		result[i] = new(Point)
-		result[i].x, result[i].y = curve.Add(a[i].x, a[i].y, b[i].x, b[i].y)
+		result[i].X, result[i].Y = curve.Add(a[i].X, a[i].Y, b[i].X, b[i].Y)
 	}
 	return result
 }
@@ -327,14 +332,14 @@ func Sum(nums ...*big.Int) *big.Int {
 
 // SumPoints adds the given curve points and returns the total sum.
 func SumPoints(points ...*Point) *Point {
-	sumx := new(big.Int).Set(points[0].x)
-	sumy := new(big.Int).Set(points[0].y)
+	sumx := new(big.Int).Set(points[0].X)
+	sumy := new(big.Int).Set(points[0].Y)
 	for i := 1; i < len(points); i++ {
-		sumx, sumy = curve.Add(sumx, sumy, points[i].x, points[i].y)
+		sumx, sumy = curve.Add(sumx, sumy, points[i].X, points[i].Y)
 	}
 	return &Point{
-		x: sumx,
-		y: sumy,
+		X: sumx,
+		Y: sumy,
 	}
 }
 
